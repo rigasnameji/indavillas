@@ -1,0 +1,19 @@
+name: Publish to WordPress
+
+on:
+  push:
+    paths:
+      - "posts/*.md"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm install marked axios
+
+      - name: Publish post
+        run: node publish.js
