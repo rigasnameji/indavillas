@@ -2,6 +2,7 @@
 title: "From Property Manager to Portfolio Architect: How AI Agents Are Redefining STR Scalability"
 slug: "ai-agents-redefining-str-scalability"
 excerpt: "Discover how autonomous AI agents are helping luxury short-term rental operators shatter the 'Human Ceiling,' scale their portfolios, and deliver five-star hospitality — without burning out their teams."
+meta_description: "Scale your luxury STR portfolio with autonomous AI agents. Shatter the 'Human Ceiling' and deliver 5-star hospitality through intelligent automation."
 status: draft
 ---
 
