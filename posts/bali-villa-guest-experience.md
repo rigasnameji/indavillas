@@ -3,7 +3,7 @@ title: "The Art of the Five-Star Welcome: How to Create a Luxury Arrival Experie
 slug: "luxury-villa-arrival-experience-bali"
 excerpt: "The moment a guest arrives at your Bali villa sets the tone for their entire stay. Discover the high-touch arrival rituals that top luxury STR operators use to earn five-star reviews before the first night is over."
 meta_description: "Learn how to craft a five-star luxury arrival experience for your Bali villa. From personalized welcome baskets to smart-lock automation, these strategies turn first impressions into five-star reviews."
-status: draft
+status: publish
 author: "IndaVillas Team"
 author_role: "Head of Guest Experience"
 date: "2026-04-01"
