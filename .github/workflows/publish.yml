@@ -3,21 +3,37 @@ name: Publish to WordPress
 on:
   push:
     paths:
-      - "*.md"  
+      - "posts/**/*.md"
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install dependencies
-        run: npm install gray-matter axios
+        run: npm install gray-matter axios marked
 
-      - name: Publish post
+      - name: Get changed markdown file
+        id: changed_file
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD | grep "^posts/.*\.md$" | head -n 1)
+          echo "file=$CHANGED" >> $GITHUB_OUTPUT
+
+      - name: Publish post to WordPress
+        if: steps.changed_file.outputs.file != ''
         run: node publish.js
         env:
           WP_URL: ${{ secrets.WP_URL }}
           WP_USER: ${{ secrets.WP_USER }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          POST_FILE: ${{ steps.changed_file.outputs.file }}
