@@ -7,7 +7,7 @@ status: publish
 author: "IndaVillas Team"
 author_role: "Lead Property Manager"
 date: "2026-04-04"
-last_updated: "2026-04-09"
+last_updated: "2026-04-10"
 tags:
   - Luxury Hospitality
   - Property Manageme06"
