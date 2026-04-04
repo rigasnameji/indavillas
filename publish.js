@@ -1,4 +1,4 @@
-// publish.js — Publishes a Markdown post to WordPress via the REST API
+// publish.js — Publishes or updates a Markdown post to WordPress via the REST API
 // Usage: node publish.js posts/my-post.md
 
 const fs = require('fs');
@@ -78,13 +78,11 @@ async function publishPost(filePath) {
   };
 
   // WordPress REST API requires integer IDs for tags/categories.
-  // Only include them if the frontmatter values are actually numbers.
   if (frontmatter.categories) {
     const cats = Array.isArray(frontmatter.categories) ? frontmatter.categories : [frontmatter.categories];
     const numericCats = cats.filter(c => Number.isInteger(Number(c)) && String(c).trim() !== '').map(Number);
     if (numericCats.length > 0) postData.categories = numericCats;
   }
-
   if (frontmatter.tags) {
     const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [frontmatter.tags];
     const numericTags = tags.filter(t => Number.isInteger(Number(t)) && String(t).trim() !== '').map(Number);
@@ -92,23 +90,43 @@ async function publishPost(filePath) {
   }
 
   const cleanPassword = WP_APP_PASSWORD.replace(/\s+/g, '');
-  const credentials = Buffer.from(WP_USER + ':' + cleanPassword).toString('base64');
+  const credentials   = Buffer.from(WP_USER + ':' + cleanPassword).toString('base64');
+  const authHeaders   = {
+    'Authorization': 'Basic ' + credentials,
+    'Content-Type':  'application/json',
+  };
 
-  const apiUrl = WP_URL + '/wp-json/wp/v2/posts';
-  console.log('Posting to: ' + apiUrl);
-  console.log('Title: '     + postData.title);
-  console.log('Status: '    + postData.status);
-  console.log('Slug: '      + postData.slug);
+  const slug = frontmatter.slug || '';
+  console.log('Slug: '   + slug);
+  console.log('Title: '  + postData.title);
+  console.log('Status: ' + postData.status);
 
   try {
-    const response = await axios.post(apiUrl, postData, {
-      headers: {
-        'Authorization': 'Basic ' + credentials,
-        'Content-Type':  'application/json',
-      },
-    });
+    // ── Check if a post with this slug already exists ──
+    let existingId = null;
+    if (slug) {
+      console.log('Checking for existing post with slug: ' + slug);
+      const searchResp = await axios.get(WP_URL + '/wp-json/wp/v2/posts', {
+        params: { slug: slug, status: 'any' },
+        headers: authHeaders,
+      });
+      if (searchResp.data && searchResp.data.length > 0) {
+        existingId = searchResp.data[0].id;
+        console.log('Found existing post ID: ' + existingId + ' — will UPDATE.');
+      }
+    }
 
-    console.log('\nSUCCESS — Post created in WordPress!');
+    let response;
+    if (existingId) {
+      // UPDATE existing post
+      response = await axios.post(WP_URL + '/wp-json/wp/v2/posts/' + existingId, postData, { headers: authHeaders });
+      console.log('\nSUCCESS — Post UPDATED in WordPress!');
+    } else {
+      // CREATE new post
+      response = await axios.post(WP_URL + '/wp-json/wp/v2/posts', postData, { headers: authHeaders });
+      console.log('\nSUCCESS — Post CREATED in WordPress!');
+    }
+
     console.log('  Post ID : ' + response.data.id);
     console.log('  Post URL: ' + response.data.link);
 
@@ -116,12 +134,8 @@ async function publishPost(filePath) {
     if (error.response) {
       console.error('\nERROR: WordPress API responded with status ' + error.response.status);
       console.error(JSON.stringify(error.response.data, null, 2));
-      if (error.response.status === 401) {
-        console.error('Hint: Check WP_USER and WP_APP_PASSWORD secrets.');
-      }
-      if (error.response.status === 403) {
-        console.error('Hint: WP user must be Editor or Administrator.');
-      }
+      if (error.response.status === 401) console.error('Hint: Check WP_USER and WP_APP_PASSWORD secrets.');
+      if (error.response.status === 403) console.error('Hint: WP user must be Editor or Administrator.');
     } else {
       console.error('\nERROR: Could not reach WordPress: ' + error.message);
     }
