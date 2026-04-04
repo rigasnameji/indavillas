@@ -7,7 +7,7 @@ const matter = require('gray-matter');
 const axios = require('axios');
 const { marked } = require('marked');
 
-// ── 1. Validate environment variables ────────────────────────────────────────
+// ── 1. Validate environment variables ──────────────────────────────────────────
 const WP_URL = (process.env.WP_URL || '').replace(/\/$/, '');
 const WP_USER = process.env.WP_USER || '';
 const WP_APP_PASSWORD = process.env.WP_APP_PASSWORD || '';
@@ -20,8 +20,10 @@ if (!WP_URL || !WP_USER || !WP_APP_PASSWORD) {
   process.exit(1);
 }
 
-// ── 2. Validate file path argument ───────────────────────────────────────────
+// ── 2. Validate file path argument ──────────────────────────────────────────────
 const filePath = process.argv[2] || process.env.POST_FILE || '';
+console.log('POST_FILE env:', process.env.POST_FILE);
+console.log('filePath resolved:', filePath);
 
 if (!filePath) {
   console.error('ERROR: No file path provided. Usage: node publish.js posts/my-post.md');
@@ -33,10 +35,9 @@ if (!fs.existsSync(filePath)) {
   process.exit(1);
 }
 
-// ── 3. Main publish function ──────────────────────────────────────────────────
+// ── 3. Main publish function ────────────────────────────────────────────────────
 async function publishPost(filePath) {
   console.log('Reading: ' + filePath);
-
   const fileContent = fs.readFileSync(filePath, 'utf8');
   const { data: frontmatter, content: markdownBody } = matter(fileContent);
 
@@ -71,28 +72,33 @@ async function publishPost(filePath) {
   const postData = {
     title:   frontmatter.title,
     content: htmlContent,
-    status:  frontmatter.status  || 'draft',
-    slug:    frontmatter.slug    || '',
+    status:  frontmatter.status || 'draft',
+    slug:    frontmatter.slug   || '',
     excerpt: frontmatter.excerpt || '',
   };
 
+  // WordPress REST API requires integer IDs for tags/categories.
+  // Only include them if the frontmatter values are actually numbers.
   if (frontmatter.categories) {
-    postData.categories = Array.isArray(frontmatter.categories)
-      ? frontmatter.categories : [frontmatter.categories];
+    const cats = Array.isArray(frontmatter.categories) ? frontmatter.categories : [frontmatter.categories];
+    const numericCats = cats.filter(c => Number.isInteger(Number(c)) && String(c).trim() !== '').map(Number);
+    if (numericCats.length > 0) postData.categories = numericCats;
   }
 
   if (frontmatter.tags) {
-    postData.tags = Array.isArray(frontmatter.tags)
-      ? frontmatter.tags : [frontmatter.tags];
+    const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [frontmatter.tags];
+    const numericTags = tags.filter(t => Number.isInteger(Number(t)) && String(t).trim() !== '').map(Number);
+    if (numericTags.length > 0) postData.tags = numericTags;
   }
 
   const cleanPassword = WP_APP_PASSWORD.replace(/\s+/g, '');
-  const credentials   = Buffer.from(WP_USER + ':' + cleanPassword).toString('base64');
-  const apiUrl = WP_URL + '/wp-json/wp/v2/posts';
+  const credentials = Buffer.from(WP_USER + ':' + cleanPassword).toString('base64');
 
+  const apiUrl = WP_URL + '/wp-json/wp/v2/posts';
   console.log('Posting to: ' + apiUrl);
-  console.log('Title:      ' + postData.title);
-  console.log('Status:     ' + postData.status);
+  console.log('Title: '     + postData.title);
+  console.log('Status: '    + postData.status);
+  console.log('Slug: '      + postData.slug);
 
   try {
     const response = await axios.post(apiUrl, postData, {
@@ -101,9 +107,11 @@ async function publishPost(filePath) {
         'Content-Type':  'application/json',
       },
     });
+
     console.log('\nSUCCESS — Post created in WordPress!');
     console.log('  Post ID : ' + response.data.id);
     console.log('  Post URL: ' + response.data.link);
+
   } catch (error) {
     if (error.response) {
       console.error('\nERROR: WordPress API responded with status ' + error.response.status);
