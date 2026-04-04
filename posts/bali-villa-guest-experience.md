@@ -7,7 +7,7 @@ status: publish
 author: "IndaVillas Team"
 author_role: "Head of Guest Experience"
 date: "2026-04-01"
-last_updated: "2026-04-01"
+last_updated: "2026-04-04"
 tags: ["Luxury Hospitality", "Guest Experience", "Short-Term Rentals", "Bali Villas", "Property Management"]
 reading_time: "7 min read"
 canonical_url: "https://indavillas.com/blog/luxury-villa-arrival-experience-bali"
