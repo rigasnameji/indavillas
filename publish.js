@@ -21,7 +21,7 @@ if (!WP_URL || !WP_USER || !WP_APP_PASSWORD) {
 }
 
 // ── 2. Validate file path argument ───────────────────────────────────────────
-const filePath = process.argv[2];
+const filePath = process.argv[2] || process.env.POST_FILE || '';
 
 if (!filePath) {
   console.error('ERROR: No file path provided. Usage: node publish.js posts/my-post.md');
