@@ -75,7 +75,19 @@ async function publishPost(filePath) {
     status:  frontmatter.status || 'draft',
     slug:    frontmatter.slug   || '',
     excerpt: frontmatter.excerpt || '',
+    meta: {
+      author_role: frontmatter.author_role || '',
+      last_updated: frontmatter.last_updated || '',
+      reading_time: frontmatter.reading_time || '',
+      canonical_url: frontmatter.canonical_url || '',
+      _yoast_wpseo_metadesc: frontmatter.meta_description || '', 
+      rank_math_description: frontmatter.meta_description || ''
+    }
   };
+
+  if (frontmatter.date) {
+    postData.date = new Date(frontmatter.date).toISOString();
+  }
 
   // WordPress REST API requires integer IDs for tags/categories.
   if (frontmatter.categories) {
